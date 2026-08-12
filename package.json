@@ -1,0 +1,16 @@
+{
+  "name": "geomap-indonesia",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Geomap Indonesia - API backend (Go) + React frontend (web)",
+  "scripts": {
+    "dev": "concurrently -n api,web -c blue,green \"go run ./cmd/api\" \"npm --prefix web run dev\"",
+    "dev:api": "go run ./cmd/api",
+    "dev:web": "npm --prefix web run dev",
+    "build": "npm --prefix web run build",
+    "install:web": "npm --prefix web install"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
