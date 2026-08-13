@@ -21,7 +21,7 @@ services:
     restart: unless-stopped
 
   postgres:
-    image: postgis/postgis:15-3.3
+    build: ./postgres
     environment:
       POSTGRES_DB: geomapping_id
       POSTGRES_USER: postgres
@@ -41,6 +41,15 @@ services:
     ports:
       - "6379:6379"
     restart: unless-stopped
+
+  # Frontend React (nginx): serve static build + proxy /api -> api:8080.
+  # Tidak di-expose ke host karena diakses via Cloudflare tunnel (network internal).
+  web:
+    build: ./web
+    container_name: geomap-web
+    restart: unless-stopped
+    depends_on:
+      - api
 
 volumes:
   pgdata:

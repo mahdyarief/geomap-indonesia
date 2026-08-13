@@ -21,6 +21,50 @@ export default function WilayahPage() {
     enabled: !!kode,
   })
 
+  const provinces = useQuery({
+    queryKey: ['wilayah', 'provinsi'],
+    queryFn: () => api<Wilayah[]>('/api/v1/wilayah?limit=100'),
+    enabled: !kode,
+  })
+
+  if (!kode) {
+    return (
+      <div className="flex flex-col gap-6">
+        <div>
+          <h1 className="text-xl font-semibold">Wilayah</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Pilih provinsi untuk melihat detail dan wilayah turunannya.
+          </p>
+        </div>
+
+        {provinces.isLoading && <p className="text-sm text-muted-foreground">Memuat…</p>}
+        {provinces.error && (
+          <p className="text-sm text-destructive">{(provinces.error as Error).message}</p>
+        )}
+        {provinces.data && provinces.data.length === 0 && (
+          <p className="text-sm text-muted-foreground">Tidak ada data wilayah.</p>
+        )}
+        {provinces.data && provinces.data.length > 0 && (
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {provinces.data.map((p) => (
+              <Link key={p.kode} to={`/app/wilayah/${p.kode}`}>
+                <Card className="transition-colors hover:border-ring">
+                  <CardHeader className="flex flex-row items-center justify-between gap-2">
+                    <CardTitle className="truncate">{p.nama}</CardTitle>
+                    <Badge variant="muted">{p.type}</Badge>
+                  </CardHeader>
+                  <CardContent className="text-sm text-muted-foreground">
+                    Kode {p.kode}
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
+    )
+  }
+
   if (detail.isLoading) {
     return <p className="text-sm text-muted-foreground">Memuat detail…</p>
   }
@@ -31,8 +75,8 @@ export default function WilayahPage() {
         <p className="text-sm text-destructive">
           {(detail.error as Error)?.message || 'Wilayah tidak ditemukan.'}
         </p>
-        <Link to="/app/dashboard" className="text-sm text-primary underline underline-offset-4">
-          Kembali ke dashboard
+        <Link to="/app/wilayah" className="text-sm text-primary underline underline-offset-4">
+          Kembali ke daftar wilayah
         </Link>
       </div>
     )

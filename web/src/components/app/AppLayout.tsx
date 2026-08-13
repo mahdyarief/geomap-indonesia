@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useAuthStore } from '@/store/auth'
 import { NavLink, Outlet } from 'react-router'
 import { Button } from '@/components/ui/button'
-import { LogOut, LayoutDashboard, Map, Search, MapPin, X, Menu } from 'lucide-react'
+import { LogOut, LayoutDashboard, Map, Search, MapPin, Route, X, Menu } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const NAV_ITEMS = [
@@ -10,6 +10,7 @@ const NAV_ITEMS = [
   { to: '/app/wilayah', label: 'Wilayah', icon: Map },
   { to: '/app/search', label: 'Pencarian', icon: Search },
   { to: '/app/reverse', label: 'Reverse Geocode', icon: MapPin },
+  { to: '/app/distance', label: 'Hitung Jarak', icon: Route },
 ]
 
 export function AppLayout() {

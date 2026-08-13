@@ -30,5 +30,5 @@ func (h *BoundaryHandler) GetGeoJSON(c *gin.Context) {
 		failure(c, http.StatusInternalServerError, codeInternalError, "boundary retrieval failed")
 		return
 	}
-	c.JSON(http.StatusOK, feature)
+	success(c, http.StatusOK, feature)
 }

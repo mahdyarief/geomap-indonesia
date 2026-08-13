@@ -64,3 +64,33 @@ func (r *BoundaryRepository) GetGeoJSON(ctx context.Context, kode string) (*GeoJ
 	}
 	return feature, nil
 }
+
+// PointInRegions reports whether a point (lat/lng) falls inside any wilayah
+// whose kode is in codes, regardless of the administrative level. The second
+// boolean is true when at least one of the codes resolves to a region with a
+// usable boundary geometry; when it is false, the supplied codes are unknown
+// or carry no geometry. It is used to enforce administrative-area restrictions
+// (e.g. only allow coordinates inside allowed wilayah codes).
+func (r *BoundaryRepository) PointInRegions(ctx context.Context, lat, lng float64, codes []string) (within bool, anyKnown bool, err error) {
+	const query = `
+		WITH regions AS (
+			SELECT geometry FROM provinsi WHERE kode = ANY($1)
+			UNION ALL
+			SELECT geometry FROM kabupaten WHERE kode = ANY($1)
+			UNION ALL
+			SELECT geometry FROM kecamatan WHERE kode = ANY($1)
+			UNION ALL
+			SELECT geometry FROM kelurahan WHERE kode = ANY($1)
+		)
+		SELECT
+			EXISTS (SELECT 1 FROM regions WHERE geometry IS NOT NULL),
+			EXISTS (SELECT 1 FROM regions
+				WHERE geometry IS NOT NULL
+				  AND ST_Intersects(geometry, ST_SetSRID(ST_MakePoint($2, $3), 4326)))`
+
+	err = r.pool.QueryRow(ctx, query, codes, lng, lat).Scan(&anyKnown, &within)
+	if err != nil {
+		return false, false, fmt.Errorf("boundary point in regions: %w", err)
+	}
+	return within, anyKnown, nil
+}

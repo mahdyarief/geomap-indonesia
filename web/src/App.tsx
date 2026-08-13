@@ -9,6 +9,7 @@ import DashboardPage from '@/pages/app/DashboardPage'
 import WilayahPage from '@/pages/app/WilayahPage'
 import SearchPage from '@/pages/app/SearchPage'
 import ReversePage from '@/pages/app/ReversePage'
+import DistancePage from '@/pages/app/DistancePage'
 
 export default function App() {
   return (
@@ -31,6 +32,7 @@ export default function App() {
             <Route path="wilayah/:kode" element={<WilayahPage />} />
             <Route path="search" element={<SearchPage />} />
             <Route path="reverse" element={<ReversePage />} />
+            <Route path="distance" element={<DistancePage />} />
           </Route>
           <Route path="*" element={<NavigateToDashboard />} />
         </Routes>

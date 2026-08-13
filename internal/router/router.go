@@ -21,6 +21,7 @@ func New(cfg *config.Config, pool *pgxpool.Pool) *gin.Engine {
 	reverseRepo := repository.NewReverseRepository(pool)
 	kodeposRepo := repository.NewKodeposRepository(pool)
 	boundaryRepo := repository.NewBoundaryRepository(pool)
+	distanceRepo := repository.NewDistanceRepository(pool)
 
 	authSvc := service.NewAuthService(cfg)
 	wilayahSvc := service.NewWilayahService(wilayahRepo)
@@ -28,6 +29,7 @@ func New(cfg *config.Config, pool *pgxpool.Pool) *gin.Engine {
 	searchSvc := service.NewSearchService(reverseRepo)
 	kodeposSvc := service.NewKodeposService(kodeposRepo)
 	boundarySvc := service.NewBoundaryService(boundaryRepo)
+	distanceSvc := service.NewDistanceService(distanceRepo, boundaryRepo)
 
 	authH := handler.NewAuthHandler(authSvc)
 	wilayahH := handler.NewWilayahHandler(wilayahSvc)
@@ -35,6 +37,7 @@ func New(cfg *config.Config, pool *pgxpool.Pool) *gin.Engine {
 	searchH := handler.NewSearchHandler(searchSvc)
 	kodeposH := handler.NewKodeposHandler(kodeposSvc)
 	boundaryH := handler.NewBoundaryHandler(boundarySvc)
+	distanceH := handler.NewDistanceHandler(distanceSvc)
 	healthH := handler.NewHealthHandler(pool)
 
 	limiter := middleware.NewRateLimiter(cfg.RateLimitPerHour)
@@ -60,6 +63,7 @@ func New(cfg *config.Config, pool *pgxpool.Pool) *gin.Engine {
 		auth.GET("/kodepos/:kode", kodeposH.Lookup)
 		auth.GET("/kodepos", kodeposH.ByWilayah)
 		auth.GET("/boundaries/:kode", boundaryH.GetGeoJSON)
+		auth.POST("/distance", distanceH.Calculate)
 	}
 
 	return r

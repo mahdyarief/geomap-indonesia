@@ -80,3 +80,19 @@ export interface AuthResponse {
   token_type: string
   expires_in: number
 }
+
+export interface DistanceRequest {
+  origin: Centroid
+  destination: Centroid
+}
+
+export interface DistanceGeometry {
+  type: string
+  coordinates: [number, number][]
+}
+
+export interface DistanceResult {
+  distance_km: number
+  duration_minutes: number
+  geometry: DistanceGeometry
+}

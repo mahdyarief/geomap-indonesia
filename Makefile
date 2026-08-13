@@ -1,4 +1,4 @@
-.PHONY: run build test vet migrate db-up db-down import-master import-boundaries import-kodepos import-all
+.PHONY: run build test vet migrate db-up db-down import-master import-boundaries import-kodepos import-roads import-all
 
 # Run API server locally
 run:
@@ -32,5 +32,8 @@ import-boundaries:
 
 import-kodepos:
 	go run ./scripts/import_kodepos
+
+import-roads:
+	bash ./scripts/import_roads/run.sh
 
 import-all: import-master import-kodepos import-boundaries

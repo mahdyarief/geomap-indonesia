@@ -1,5 +1,7 @@
 package models
 
+import "encoding/json"
+
 // WilayahType identifies the administrative level of a wilayah entry.
 type WilayahType string
 
@@ -134,4 +136,17 @@ type Pagination struct {
 	Limit      int `json:"limit"`
 	Total      int `json:"total"`
 	TotalPages int `json:"total_pages"`
+}
+
+// DistanceRequest is the body of POST /distance.
+type DistanceRequest struct {
+	Origin      Centroid `json:"origin"`
+	Destination Centroid `json:"destination"`
+}
+
+// DistanceResult is the response for POST /distance.
+type DistanceResult struct {
+	DistanceKm      float64         `json:"distance_km"`
+	DurationMinutes float64         `json:"duration_minutes"`
+	Geometry        json.RawMessage `json:"geometry"`
 }
