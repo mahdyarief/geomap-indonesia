@@ -12,10 +12,11 @@ import (
 
 // DistanceRoute is the raw road-network result from pgRouting.
 type DistanceRoute struct {
-	SourceVertex int64
-	TargetVertex int64
-	DistanceKm   float64
-	Geometry     json.RawMessage
+	SourceVertex    int64
+	TargetVertex    int64
+	DistanceKm      float64
+	DurationMinutes float64
+	Geometry        json.RawMessage
 }
 
 // ErrNoRoute is returned when pgRouting cannot connect origin and destination.
@@ -31,9 +32,10 @@ func NewDistanceRepository(pool *pgxpool.Pool) *DistanceRepository {
 	return &DistanceRepository{pool: pool}
 }
 
-// Route returns the shortest road path between two coordinates (snapping to the
+// Route returns the fastest road path between two coordinates (snapping to the
 // nearest vertices in java_ways). Requires the graph built by
-// scripts/import_roads. Cost is in kilometres (ST_Length(geography)/1000).
+// scripts/import_roads. Edge cost is travel time in minutes (length/speed);
+// dist_km is the geodesic length in kilometres.
 func (r *DistanceRepository) Route(ctx context.Context, srcLat, srcLng, dstLat, dstLng float64) (*DistanceRoute, error) {
 	const query = `
 		WITH giant AS (
@@ -68,6 +70,7 @@ func (r *DistanceRepository) Route(ctx context.Context, srcLat, srcLng, dstLat, 
 		SELECT
 			(SELECT src FROM snap)::bigint,
 			(SELECT dst FROM snap)::bigint,
+			COALESCE(SUM(w.dist_km), 0)::float8,
 			COALESCE(SUM(rt.cost), 0)::float8,
 			ST_AsGeoJSON(ST_LineMerge(ST_Collect(w.geom)))
 		FROM route rt
@@ -79,12 +82,13 @@ func (r *DistanceRepository) Route(ctx context.Context, srcLat, srcLng, dstLat, 
 	`
 
 	var (
-		src, dst int64
-		distance float64
-		geomJSON []byte
+		src, dst  int64
+		distance  float64
+		duration  float64
+		geomJSON  []byte
 	)
 	err := r.pool.QueryRow(ctx, query, srcLat, srcLng, dstLat, dstLng).
-		Scan(&src, &dst, &distance, &geomJSON)
+		Scan(&src, &dst, &distance, &duration, &geomJSON)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, ErrNoRoute
 	}
@@ -92,9 +96,10 @@ func (r *DistanceRepository) Route(ctx context.Context, srcLat, srcLng, dstLat, 
 		return nil, fmt.Errorf("distance route: %w", err)
 	}
 	res := &DistanceRoute{
-		SourceVertex: src,
-		TargetVertex: dst,
-		DistanceKm:   distance,
+		SourceVertex:    src,
+		TargetVertex:    dst,
+		DistanceKm:      distance,
+		DurationMinutes: duration,
 	}
 	if len(geomJSON) > 0 {
 		res.Geometry = json.RawMessage(geomJSON)

@@ -21,11 +21,11 @@ WHERE highway IN (
     'primary',       'primary_link',
     'secondary',     'secondary_link',
     'tertiary',      'tertiary_link',
+    'unclassified',
+    'residential',
+    'road',
     'service',
     'living_street'
-    -- 'unclassified',   -- referensi kedepan (~86 rb)
-    -- 'residential',    -- referensi kedepan (~1,9 jt)
-    -- 'road'            -- referensi kedepan
 );
 
 -- Pastikan kolom id + indeks geometri (digunakan build_topology.sql).

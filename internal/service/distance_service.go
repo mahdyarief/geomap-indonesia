@@ -8,10 +8,6 @@ import (
 	"github.com/mahdyarief/geomap-indonesia/internal/repository"
 )
 
-// avgRoadSpeedKmH is the assumed average road speed used to estimate
-// travel time. A blend of urban (~30 km/h) and inter-city (~60 km/h) speeds.
-const avgRoadSpeedKmH = 40.0
-
 // ErrOutsideAllowedRegions is returned when a route point falls outside the
 // administrative boundaries supplied via allowed_wilayah_codes.
 var ErrOutsideAllowedRegions = errors.New("point outside allowed wilayah regions")
@@ -44,10 +40,9 @@ func (s *DistanceService) Calculate(ctx context.Context, origin, destination mod
 	if err != nil {
 		return nil, err
 	}
-	durationMinutes := (route.DistanceKm / avgRoadSpeedKmH) * 60.0
 	return &models.DistanceResult{
 		DistanceKm:      route.DistanceKm,
-		DurationMinutes: durationMinutes,
+		DurationMinutes: route.DurationMinutes,
 		Geometry:        route.Geometry,
 	}, nil
 }

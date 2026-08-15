@@ -35,24 +35,32 @@ fi
 echo "==> [1b/4] Pastikan ekstensi hstore tersedia (dipakai --hstore)"
 psql $PG_ARGS -v ON_ERROR_STOP=1 -tAc "CREATE EXTENSION IF NOT EXISTS hstore;" >/dev/null
 
-echo "==> [2/4] Import seluruh data OSM ke Postgres (output pgsql default)"
+echo "==> [2/5] Import seluruh data OSM ke Postgres (output pgsql default)"
 # Catatan: paket Ubuntu osm2pgsql 2.2.0 tidak menyertakan modul Lua `osm2pgsql`
 # untuk output flex, jadi kita pakai output pgsql default lalu memfilter jalan
 # drivable dari planet_osm_line lewat SQL (build_java_ways.sql).
+# --flat-nodes menaruh cache node di file (bukan di DB) dan --drop menghapus
+# tabel middle (planet_osm_nodes/ways/rels) setelah import, agar disk tetap lega.
 osm2pgsql \
     --create \
     --slim \
     --hstore \
+    --flat-nodes "$OSM_DIR/java-nodes.cache" \
+    --cache 1024 \
+    --drop \
     --database "$DB_NAME" \
     --host "$DB_HOST" \
     --port "$DB_PORT" \
     --username "$DB_USER" \
     "$PBF"
 
-echo "==> [3/4] Ekstrak jalan drivable ke tabel java_ways"
+echo "==> [3/5] Ekstrak jalan drivable ke tabel java_ways"
 psql $PG_ARGS -v ON_ERROR_STOP=1 -f build_java_ways.sql
 
-echo "==> [4/4] Bangun topologi routing"
+echo "==> [4/5] Drop tabel planet_osm_* (data mentah tidak dipakai runtime)"
+psql $PG_ARGS -v ON_ERROR_STOP=1 -c "DROP TABLE IF EXISTS planet_osm_nodes, planet_osm_ways, planet_osm_rels, planet_osm_line, planet_osm_polygon, planet_osm_point, planet_osm_roads;" >/dev/null
+
+echo "==> [5/5] Bangun topologi routing"
 psql $PG_ARGS -v ON_ERROR_STOP=1 -f build_topology.sql
 
-echo "==> Selesai. Graf routing siap dipakai: java_ways_noded"
+echo "==> Selesai. Graf routing siap dipakai: java_ways (semua kelas jalan drivable)"
