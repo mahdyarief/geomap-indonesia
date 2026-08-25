@@ -10,6 +10,9 @@ node_modules/
 .env
 .env.local
 
+# Agent project memory (local credentials / env details)
+/MEMORY.md
+
 # Data sources (cloned repos)
 /data/
 

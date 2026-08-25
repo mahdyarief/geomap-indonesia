@@ -1,13 +1,16 @@
 -- build_topology.sql — bangun topologi routing dari tabel `java_ways`
 -- (hasil routing.lua / osm2pgsql flex: seluruh kelas jalan drivable).
 --
--- CATATAN: data OSM sudah ter-noding secara alami (dua jalan yang bersimpangan
--- berbagi node yang sama, dipertahankan osm2pgsql sebagai vertex identik), jadi
--- kita LANGSUNG pgr_createTopology pada `java_ways` — tanpa pgr_nodeNetwork.
--- pgr_nodeNetwork secara fisik memecah garis via self-join ST_Crosses O(n²)
--- dan terbukti sangat lambat / rentan OOM untuk dataset besar. Menghasilkan
--- java_ways berkolom source/target + cost (waktu tempuh menit) + dist_km, plus
--- tabel vertex java_ways_vertices_pgr, siap dipakai pgr_dijkstra.
+-- CATATAN (2026-08-25): routing.lua semula mengimpor dengan
+-- split_at_way_intersections=true, namun opsi itu TIDAK PERNAH ADA di
+-- osm2pgsql 2.3.1 dan diabaikan diam-diam oleh parser flex — akibatnya
+-- java_ways sangat terfragmentasi (1,48 jt komponen, raksasa hanya 6,5%
+-- vertex). Pipeline yang benar: jalankan split_java.sql dulu untuk memecah
+-- java_ways di node persimpangan OSM asli menjadi java_ways_split, BARU
+-- pgr_createTopology pada java_ways_split. (pgr_nodeNetwork tidak dipakai:
+-- self-join ST_Crosses O(n²), sangat lambat untuk dataset sebesar ini.)
+-- Menghasilkan java_ways berkolom source/target + cost (waktu tempuh menit) +
+-- dist_km, plus tabel vertex java_ways_vertices_pgr, siap dipakai pgr_dijkstra.
 
 -- 1) Pastikan ada kolom id unik + indeks geometri (untuk pgr_createTopology).
 ALTER TABLE java_ways ADD COLUMN IF NOT EXISTS id BIGSERIAL PRIMARY KEY;
@@ -73,7 +76,5 @@ SELECT 'java_ways edges', count(*) FROM java_ways;
 WITH comp AS (
     SELECT component, count(*) AS cnt FROM java_ways_components GROUP BY component
 )
-SELECT 'top-5 komponen (ukuran, % dari semua vertex)' AS ringkasan
-UNION ALL
-SELECT format('%s  (%.1f%%)', cnt, 100.0 * cnt / (SELECT sum(cnt) FROM comp))
+SELECT component, cnt, ROUND(100.0 * cnt::numeric / (SELECT sum(cnt)::numeric FROM comp), 1) AS pct_vertices
 FROM comp ORDER BY cnt DESC LIMIT 5;

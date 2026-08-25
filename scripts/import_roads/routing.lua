@@ -1,8 +1,10 @@
 -- routing.lua — osm2pgsql flex config untuk jaringan jalan yang dapat dilalui kendaraan.
 -- Hanya menyimpan jalan berkategori drivable ke tabel `java_ways` (geometry 4326).
 -- Tabel ini kemudian diproses pgRouting (pgr_nodeNetwork + pgr_createTopology).
-
-local osm2pgsql = require 'osm2pgsql'
+--
+-- CATATAN: API flex osm2pgsql terdaftar sebagai GLOBAL `osm2pgsql`
+-- (bukan module yang bisa di-require). Jadi jangan pakai
+-- `local osm2pgsql = require 'osm2pgsql'` — itu error "module not found".
 
 local ways = osm2pgsql.define_way_table('java_ways', {
     { column = 'osm_id', type = 'bigint' },
@@ -10,7 +12,7 @@ local ways = osm2pgsql.define_way_table('java_ways', {
     { column = 'highway', type = 'text' },
     { column = 'oneway', type = 'text' },
     { column = 'geom', type = 'linestring', projection = 4326 },
-})
+}, { split_at_way_intersections = true })
 
 -- Jalan yang boleh dimasukkan ke graf routing (bisa dilewati mobil/motor).
 local drivable = {

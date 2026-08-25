@@ -1,13 +1,20 @@
 #!/bin/bash
 set -e
 
-# Aktifkan pgRouting pada database yang dibuat (POSTGRES_DB) dan pada template1
-# agar tersedia juga untuk database baru.
-psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-'EOSQL'
-    CREATE EXTENSION IF NOT EXISTS pgRouting;
+# Install PostGIS first (required dependency)
+psql -v ON_ERROR_STOP=1 --username "" --dbname "" <<-EOSQL
     CREATE EXTENSION IF NOT EXISTS postgis;
+    CREATE EXTENSION IF NOT EXISTS postgis_topology;
 EOSQL
 
-psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname template1 <<-'EOSQL'
-    CREATE EXTENSION IF NOT EXISTS pgRouting;
+# Install pgRouting (depends on PostGIS)
+psql -v ON_ERROR_STOP=1 --username "" --dbname "" <<-EOSQL
+    CREATE EXTENSION IF NOT EXISTS pgRouting CASCADE;
+EOSQL
+
+# Create functions in template1 so they are available in all databases
+psql -v ON_ERROR_STOP=1 --username "" --dbname template1 <<-EOSQL
+    CREATE EXTENSION IF NOT EXISTS postgis;
+    CREATE EXTENSION IF NOT EXISTS postgis_topology;
+    CREATE EXTENSION IF NOT EXISTS pgRouting CASCADE;
 EOSQL
